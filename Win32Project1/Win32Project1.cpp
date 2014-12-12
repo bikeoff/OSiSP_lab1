@@ -10,6 +10,8 @@
 HINSTANCE hInst;								// текущий экземпляр
 TCHAR szTitle[MAX_LOADSTRING];					// Текст строки заголовка
 TCHAR szWindowClass[MAX_LOADSTRING];			// имя класса главного окна
+HDC screenHandleDeviceContext;
+HDC fixedHandleDeviceContext;
 bool isDrawingByPencil;
 POINT cursorPosition;
 POINT previousCursorPosition;
@@ -46,6 +48,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	{
 		return FALSE;
 	}
+
+	fixedHandleDeviceContext = CreateCompatibleDC(screenHandleDeviceContext);
+	if (fixedHandleDeviceContext != NULL)
+	{
+		//setting
+	}
+
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
 
@@ -113,6 +122,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    {
       return FALSE;
    }
+   
+   screenHandleDeviceContext = GetDC(hWnd);
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -135,6 +146,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
+	RECT r;
+	HBRUSH hBrush;
+	HPEN hPen;
 
 	switch (message)
 	{
@@ -157,10 +171,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
+		
+		//- перенести изображение из fixedHandleDeviceContext в screenHandleDeviceContext с установленным масштабом и позицией
+		//- отрисовать как-то screenHandleDeviceContext
 
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
+		DeleteDC(fixedHandleDeviceContext);
+		ReleaseDC(hWnd, screenHandleDeviceContext);
 		PostQuitMessage(0);
 		break;
 	case WM_LBUTTONDOWN:
@@ -214,5 +233,11 @@ void ToProcessMovementByMouse(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 {
 	previousCursorPosition.x = cursorPosition.x;
 	previousCursorPosition.y = cursorPosition.y;
+	
 	//нарисовать линию от previousCursorPosition до cursorPosition
+
+	//занесли в текущий(3ий) hdc рисунок из 2ого;
+	//нарисовали в текущий(3ий) объект(линию).
+	//Затем в этом же событии вы должны вызвать перерисовку окна
+
 }
