@@ -10,12 +10,19 @@
 HINSTANCE hInst;								// текущий экземпл€р
 TCHAR szTitle[MAX_LOADSTRING];					// “екст строки заголовка
 TCHAR szWindowClass[MAX_LOADSTRING];			// им€ класса главного окна
+bool isDrawingByPencil;
+POINT cursorPosition;
+POINT previousCursorPosition;
 
 // ќтправить объ€влени€ функций, включенных в этот модуль кода:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+
+void ToProcessClickingByLeftMouseButton(HWND, UINT, WPARAM, LPARAM);
+void ToProcessReleaseByLeftMouseButton(HWND, UINT, WPARAM, LPARAM);
+void ToProcessMovementByMouse(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -150,10 +157,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: добавьте любой код отрисовки...
+
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		break;
+	case WM_LBUTTONDOWN:
+		ToProcessClickingByLeftMouseButton(hWnd, message, wParam, lParam);
+		break;
+	case WM_LBUTTONUP:
+		ToProcessReleaseByLeftMouseButton(hWnd, message, wParam, lParam);
+		break;
+	case WM_MOUSEMOVE:
+		ToProcessMovementByMouse(hWnd, message, wParam, lParam);
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -179,4 +196,23 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	return (INT_PTR)FALSE;
+}
+
+void ToProcessClickingByLeftMouseButton(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	cursorPosition.x = GET_X_LPARAM(lParam);
+	cursorPosition.y = GET_Y_LPARAM(lParam);
+	isDrawingByPencil = true;
+}
+
+void ToProcessReleaseByLeftMouseButton(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	isDrawingByPencil = false;
+}
+
+void ToProcessMovementByMouse(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	previousCursorPosition.x = cursorPosition.x;
+	previousCursorPosition.y = cursorPosition.y;
+	//нарисовать линию от previousCursorPosition до cursorPosition
 }
