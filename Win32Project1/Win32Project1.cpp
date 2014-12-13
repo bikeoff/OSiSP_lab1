@@ -1,22 +1,21 @@
-// Win32Project1.cpp: определяет точку входа для приложения.
-//
-
 #include "stdafx.h"
 #include "Win32Project1.h"
 
 #define MAX_LOADSTRING 100
+#define WIDTH_OF_FIXED_PICTURE 500
+#define HEIGHT_OF_FIXED_PICTURE 500
 
-// Глобальные переменные:
-HINSTANCE hInst;								// текущий экземпляр
-TCHAR szTitle[MAX_LOADSTRING];					// Текст строки заголовка
-TCHAR szWindowClass[MAX_LOADSTRING];			// имя класса главного окна
+HINSTANCE hInst;					
+TCHAR szTitle[MAX_LOADSTRING];		
+TCHAR szWindowClass[MAX_LOADSTRING];
+
 HDC screenHandleDeviceContext;
 HDC fixedHandleDeviceContext;
+HDC virtualHandleDeviceContext;
 bool isDrawingByPencil;
 POINT cursorPosition;
 POINT previousCursorPosition;
 
-// Отправить объявления функций, включенных в этот модуль кода:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -34,16 +33,15 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	// TODO: разместите код здесь.
 	MSG msg;
 	HACCEL hAccelTable;
+	HBITMAP hBitmap;
+	LPSIZE lpDimension;
 
-	// Инициализация глобальных строк
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_WIN32PROJECT1, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	// Выполнить инициализацию приложения:
 	if (!InitInstance (hInstance, nCmdShow))
 	{
 		return FALSE;
@@ -52,13 +50,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	fixedHandleDeviceContext = CreateCompatibleDC(screenHandleDeviceContext);
 	if (fixedHandleDeviceContext != NULL)
 	{
-		//setting
+		hBitmap = CreateCompatibleBitmap(screenHandleDeviceContext, WIDTH_OF_FIXED_PICTURE, HEIGHT_OF_FIXED_PICTURE); //from where to take the original size?
+		if (hBitmap != NULL)
+			SelectObject(fixedHandleDeviceContext, hBitmap);
 	}
-
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
 
-	// Цикл основного сообщения:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
@@ -71,13 +69,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	return (int) msg.wParam;
 }
 
-
-
-//
-//  ФУНКЦИЯ: MyRegisterClass()
-//
-//  НАЗНАЧЕНИЕ: регистрирует класс окна.
-//
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex;
@@ -99,21 +90,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex);
 }
 
-//
-//   ФУНКЦИЯ: InitInstance(HINSTANCE, int)
-//
-//   НАЗНАЧЕНИЕ: сохраняет обработку экземпляра и создает главное окно.
-//
-//   КОММЕНТАРИИ:
-//
-//        В данной функции дескриптор экземпляра сохраняется в глобальной переменной, а также
-//        создается и выводится на экран главное окно программы.
-//
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
 
-   hInst = hInstance; // Сохранить дескриптор экземпляра в глобальной переменной
+   hInst = hInstance;
 
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
@@ -131,16 +112,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-//
-//  ФУНКЦИЯ: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  НАЗНАЧЕНИЕ:  обрабатывает сообщения в главном окне.
-//
-//  WM_COMMAND	- обработка меню приложения
-//  WM_PAINT	-Закрасить главное окно
-//  WM_DESTROY	 - ввести сообщение о выходе и вернуться.
-//
-//
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -155,26 +126,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
-		// Разобрать выбор в меню:
 		switch (wmId)
 		{
-		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-			break;
-		case IDM_EXIT:
-			DestroyWindow(hWnd);
-			break;
-		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			case IDM_ABOUT:
+				DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+				break;
+			case IDM_EXIT:
+				DestroyWindow(hWnd);
+				break;
+			default:
+				return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
-		// TODO: добавьте любой код отрисовки...
-		
-		//- перенести изображение из fixedHandleDeviceContext в screenHandleDeviceContext с установленным масштабом и позицией
+		//- перенести изображение из fixedHandleDeviceContext в screenHandleDeviceContext (с установленным масштабом и позицией)
 		//- отрисовать как-то screenHandleDeviceContext
-
+		BitBlt(hdc, 0, 0, WIDTH_OF_FIXED_PICTURE, HEIGHT_OF_FIXED_PICTURE, fixedHandleDeviceContext, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
@@ -197,7 +165,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-// Обработчик сообщений для окна "О программе".
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);
@@ -222,11 +189,13 @@ void ToProcessClickingByLeftMouseButton(HWND hWnd, UINT message, WPARAM wParam, 
 	cursorPosition.x = GET_X_LPARAM(lParam);
 	cursorPosition.y = GET_Y_LPARAM(lParam);
 	isDrawingByPencil = true;
+	//create virtualDC
 }
 
 void ToProcessReleaseByLeftMouseButton(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	isDrawingByPencil = false;
+	DeleteDC(virtualHandleDeviceContext);
 }
 
 void ToProcessMovementByMouse(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -240,4 +209,5 @@ void ToProcessMovementByMouse(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	//нарисовали в текущий(3ий) объект(линию).
 	//Затем в этом же событии вы должны вызвать перерисовку окна
 
+	//move virtual to fixedDc
 }
